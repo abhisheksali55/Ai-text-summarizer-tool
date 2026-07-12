@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Summarizer</title>
+</head>
+<body>
+    <h1>AI Text Summarizer</h1>
+    <textarea id="inputText" rows="10" cols="50"></textarea><br>
+    <button onclick="summarize()">Summarize</button>
+    <p id="result"></p>
+
+    <script>
+        async function summarize() {
+            const text = document.getElementById("inputText").value;
+            const res = await fetch("/summarize", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+            });
+            const data = await res.json();
+            document.getElementById("result").innerText = data.summary;
+        }
+    </script>
+</body>
+</html>
