@@ -11,7 +11,7 @@ def home():
     return render_template("index.html")
 
 @app.route("/summarize", methods=["POST"])
-def summarize():
+def summarize1():
     data = request.get_json()
     text = data.get("text", "")
 
