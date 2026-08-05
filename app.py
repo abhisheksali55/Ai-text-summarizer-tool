@@ -1,38 +1,83 @@
-import os
-from flask import Flask, request, jsonify, render_template
-from anthropic import Anthropic
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Surat</title>
 
-app = Flask(__name__)
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family: Arial, sans-serif;
+        }
 
-client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+        body{
+            background: linear-gradient(135deg,#0f172a,#1e3a8a,#38bdf8);
+            color:white;
+            height:100vh;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            text-align:center;
+        }
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+        .container{
+            background: rgba(255,255,255,0.1);
+            padding:40px;
+            border-radius:15px;
+            backdrop-filter: blur(10px);
+            box-shadow:0 8px 20px rgba(0,0,0,0.3);
+            max-width:600px;
+        }
 
-@app.route("/summarize", methods=["POST"])
-def summarize():
-    data = request.get_json()
-    text = data.get("text", "")
+        h1{
+            font-size:50px;
+            margin-bottom:20px;
+        }
 
-    if not text:
-        return jsonify({"error": "No text provided"}), 400
+        p{
+            font-size:20px;
+            margin-bottom:30px;
+            line-height:1.6;
+        }
 
-    response = client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=300,
-        messages=[
-            {"role": "user", "content": f"Summarize this in 3 lines:\n\n{text}"}
-        ]
-    )
+        button{
+            padding:12px 25px;
+            border:none;
+            border-radius:8px;
+            background:#facc15;
+            color:#111827;
+            font-size:18px;
+            cursor:pointer;
+            transition:0.3s;
+        }
 
-    summary = response.content[0].text
-    return jsonify({"summary": summary})
+        button:hover{
+            background:#eab308;
+            transform:scale(1.05);
+        }
+    </style>
+</head>
+<body>
 
-@app.route("/health")
-def health():
-    return jsonify({"status": "ok"}), 200
+    <div class="container">
+        <h1>🌆 Welcome to Surat</h1>
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+        <p>
+            Surat is known as the Diamond City and Textile Hub of India.
+            Explore its culture, food, and beautiful places.
+        </p>
+
+        <button onclick="welcomeMessage()">Explore Surat</button>
+    </div>
+
+    <script>
+        function welcomeMessage(){
+            alert("Welcome to Surat! ❤️ Have a wonderful journey.");
+        }
+    </script>
+
+</body>
+</html>
