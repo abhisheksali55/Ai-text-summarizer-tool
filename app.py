@@ -1,83 +1,70 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Surat</title>
+import os
+from flask import Flask, render_template, request, jsonify
+from anthropic import Anthropic
 
-    <style>
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-            font-family: Arial, sans-serif;
-        }
+app = Flask(__name__)
+client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
-        body{
-            background: linear-gradient(135deg,#0f172a,#1e3a8a,#38bdf8);
-            color:white;
-            height:100vh;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            text-align:center;
-        }
+JARVIS_SYSTEM_PROMPT = """You are JARVIS, a highly intelligent, calm, and witty AI assistant 
+inspired by Tony Stark's assistant. You address the user respectfully (e.g., "Sir"), 
+speak concisely, and occasionally add subtle wit. You help with any task the user asks — 
+answering questions, summarizing text, giving explanations, or just chatting. 
+Keep responses clear and not overly long unless detail is needed."""
 
-        .container{
-            background: rgba(255,255,255,0.1);
-            padding:40px;
-            border-radius:15px;
-            backdrop-filter: blur(10px);
-            box-shadow:0 8px 20px rgba(0,0,0,0.3);
-            max-width:600px;
-        }
+# In-memory conversation store (single-user demo; resets on restart)
+conversation_history = []
 
-        h1{
-            font-size:50px;
-            margin-bottom:20px;
-        }
+@app.route("/")
+def home():
+    return render_template("index.html")
 
-        p{
-            font-size:20px;
-            margin-bottom:30px;
-            line-height:1.6;
-        }
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.get_json()
+    user_message = data.get("message", "").strip()
 
-        button{
-            padding:12px 25px;
-            border:none;
-            border-radius:8px;
-            background:#facc15;
-            color:#111827;
-            font-size:18px;
-            cursor:pointer;
-            transition:0.3s;
-        }
+    if not user_message:
+        return jsonify({"error": "No message provided"}), 400
 
-        button:hover{
-            background:#eab308;
-            transform:scale(1.05);
-        }
-    </style>
-</head>
-<body>
+    conversation_history.append({"role": "user", "content": user_message})
 
-    <div class="container">
-        <h1>🌆 Welcome to Surat</h1>
+    response = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=500,
+        system=JARVIS_SYSTEM_PROMPT,
+        messages=conversation_history
+    )
 
-        <p>
-            Surat is known as the Diamond City and Textile Hub of India.
-            Explore its culture, food, and beautiful places.
-        </p>
+    reply = response.content[0].text
+    conversation_history.append({"role": "assistant", "content": reply})
 
-        <button onclick="welcomeMessage()">Explore Surat</button>
-    </div>
+    # Keep history from growing unbounded
+    if len(conversation_history) > 20:
+        del conversation_history[:2]
 
-    <script>
-        function welcomeMessage(){
-            alert("Welcome to Surat! ❤️ Have a wonderful journey.");
-        }
-    </script>
+    return jsonify({"reply": reply})
 
-</body>
-</html>
+@app.route("/summarize", methods=["POST"])
+def summarize():
+    data = request.get_json()
+    text = data.get("text", "")
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    response = client.messages.create(
+        model="claude-sonnet-4-5",
+        max_tokens=300,
+        messages=[
+            {"role": "user", "content": f"Summarize this in 3 lines:\n\n{text}"}
+        ]
+    )
+    summary = response.content[0].text
+    return jsonify({"summary": summary})
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok"}), 200
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
