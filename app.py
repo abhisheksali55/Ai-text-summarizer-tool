@@ -22,7 +22,7 @@ def summarize1():
         model="claude-sonnet-4-5",
         max_tokens=300,
         messages=[
-            {"role": "user", "content": f"Summarize this in 3 lines:\n\n{text}"}
+            {"role": "user", "content": f"Summarize this in 5 lines:\n\n{text}"}
         ]
     )
 
